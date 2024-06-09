@@ -13,10 +13,11 @@ const App: React.FC = () => {
   const [buttonText, setButtonText] = useState("Create Task");
   const dispatch: AppDispatch = useDispatch();
   const tasks = useSelector((state: RootState) => state.tasks.tasks);
+  const API_URL = 'https://ai-certs-rges.onrender.com';
 
   useEffect(() => {
     const fetchTasks = async () => {
-      const response = await axios.get('http://localhost:8000/tasks');
+      const response = await axios.get(`${API_URL}/tasks`);
       dispatch(setTasks(response.data));
     };
     fetchTasks();
@@ -38,7 +39,7 @@ const App: React.FC = () => {
     const confirmDelete = window.confirm("Are you sure you want to delete this task?");
     if (confirmDelete) {
       try {
-        await axios.delete(`http://localhost:8000/tasks/${taskId}`);
+        await axios.delete(`${API_URL}/tasks/${taskId}`);
         dispatch(deleteTask(taskId));
       } catch (error) {
         console.error("Error deleting task:", error);
@@ -54,7 +55,7 @@ const App: React.FC = () => {
     if (currentTask) {
       // Update task
       try {
-        await axios.put(`http://localhost:8000/tasks/${task.id}`, task);
+        await axios.put(` ${API_URL}/tasks/${task.id} `, task);
         dispatch(updateTask(task));
         alert('Task updated successfully');
       } catch (error) {
@@ -63,7 +64,7 @@ const App: React.FC = () => {
     } else {
       // Create new task
       try {
-        const response = await axios.post('http://localhost:8000/tasks', task);
+        const response = await axios.post( ` ${API_URL}/tasks`   , task);
         dispatch(addTask(response.data));
         alert('Task created successfully');
       } catch (error) {

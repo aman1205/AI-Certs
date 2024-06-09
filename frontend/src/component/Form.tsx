@@ -1,4 +1,6 @@
+// src/components/Form.tsx
 import React, { useState, useEffect } from "react";
+import { Task } from "../types";
 
 interface TaskFormProps {
   onSubmit: (task: Task) => Promise<void>;
@@ -7,41 +9,24 @@ interface TaskFormProps {
   buttonText: string;
 }
 
-interface Task {
-  id?: string;
-  title: string;
-  description: string;
-  status: "Pending" | "In Progress" | "Completed";
-  dueDate: string;
-}
-
-const Form: React.FC<TaskFormProps> = ({
-  onSubmit,
-  onClose,
-  task,
-  buttonText,
-}) => {
-  const [title, setTitle] = useState(task?.title || "");
-  const [description, setDescription] = useState(task?.description || "");
-  const [status, setStatus] = useState<"Pending" | "In Progress" | "Completed">(
-    task?.status || "Pending"
-  );
-  const [dueDate, setDueDate] = useState(task?.dueDate || "");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newTask: Task = { id: task?.id,  title, description, status, dueDate };
-    onSubmit(newTask);
-  };
+const Form: React.FC<TaskFormProps> = ({ onSubmit, onClose, task, buttonText }) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
     if (task) {
       setTitle(task.title);
       setDescription(task.description);
-      setStatus(task.status);
-      setDueDate(task.dueDate);
+      setCompleted(task.completed);
     }
   }, [task]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newTask: Task = task ? { ...task, title, description, completed } : { id: "", title, description, completed };
+    onSubmit(newTask);
+  };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-600 bg-opacity-50 z-50">
@@ -97,33 +82,13 @@ const Form: React.FC<TaskFormProps> = ({
             </label>
             <select
               id="status"
-              value={status}
-              onChange={(e) =>
-                setStatus(
-                  e.target.value as "Pending" | "In Progress" | "Completed"
-                )
-              }
+              value={completed ? "Completed" : "Pending"}
+              onChange={(e) => setCompleted(e.target.value === "Completed")}
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
             >
               <option value="Pending">Pending</option>
-              <option value="In Progress">In Progress</option>
               <option value="Completed">Completed</option>
             </select>
-          </div>
-          <div>
-            <label
-              htmlFor="due-date"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Due Date
-            </label>
-            <input
-              id="due-date"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
-            />
           </div>
           <div className="flex justify-end gap-4">
             <button

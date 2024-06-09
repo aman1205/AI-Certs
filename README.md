@@ -26,3 +26,9 @@ npm install
 
 # Run the backend server
 npm start
+
+### Run Test CASE 
+npm test
+
+
+

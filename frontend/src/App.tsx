@@ -1,28 +1,26 @@
-import { useState, useEffect } from "react";
+// src/App.tsx
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Form from "./component/Form";
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from './store';
+import { setTasks, deleteTask, updateTask, addTask } from './tasksSlice';
+import { Task } from './types';
 
-interface Task {
-  id?: string;
-  title: string;
-  description: string;
-  status: 'Pending' | 'In Progress' | 'Completed';
-  dueDate: string;
-}
-
-function App() {
+const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
-    const [buttonText, setButtonText] = useState("Create Task");
+  const [buttonText, setButtonText] = useState("Create Task");
+  const dispatch: AppDispatch = useDispatch();
+  const tasks = useSelector((state: RootState) => state.tasks.tasks);
 
   useEffect(() => {
     const fetchTasks = async () => {
-      const response = await axios.get<Task[]>('http://localhost:8000/tasks');
-      setTasks(response.data);
+      const response = await axios.get('http://localhost:8000/tasks');
+      dispatch(setTasks(response.data));
     };
     fetchTasks();
-  }, []);
+  }, [dispatch]);
 
   const handleAddTaskClick = () => {
     setCurrentTask(null);
@@ -40,11 +38,8 @@ function App() {
     const confirmDelete = window.confirm("Are you sure you want to delete this task?");
     if (confirmDelete) {
       try {
-        const response = await axios.delete(`http://localhost:8000/tasks/${taskId}`);
-        if (response.status === 204) {
-          setTasks(tasks.filter(task => task.id !== taskId));
-          alert('Task deleted successfully');
-        }
+        await axios.delete(`http://localhost:8000/tasks/${taskId}`);
+        dispatch(deleteTask(taskId));
       } catch (error) {
         console.error("Error deleting task:", error);
       }
@@ -56,25 +51,21 @@ function App() {
   };
 
   const handleFormSubmit = async (task: Task) => {
-  
     if (currentTask) {
+      // Update task
       try {
-        const response = await axios.put(`http://localhost:8000/tasks/${task.id}`, task);
-        if (response.status === 201) {
-          setTasks(tasks.map(t => t.id === task.id ? task : t));
-          alert('Task updated successfully');
-        }
+        await axios.put(`http://localhost:8000/tasks/${task.id}`, task);
+        dispatch(updateTask(task));
+        alert('Task updated successfully');
       } catch (error) {
         console.error("Error updating task:", error);
       }
     } else {
-      // Create a new task
+      // Create new task
       try {
         const response = await axios.post('http://localhost:8000/tasks', task);
-        if (response.status === 201) {
-          setTasks([...tasks, response.data]);
-          alert('Task created successfully');
-        }
+        dispatch(addTask(response.data));
+        alert('Task created successfully');
       } catch (error) {
         console.error("Error creating task:", error);
       }
@@ -107,19 +98,17 @@ function App() {
             <thead className="bg-gray-100">
               <tr>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Title</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Status</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Due Date</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-500">Description</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Actions</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Completed</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-500">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {tasks.map(task => (
                 <tr key={task.id}>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">{task.title}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{task.status}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{task.dueDate}</td>
                   <td className="px-4 py-3 text-sm text-gray-500">{task.description}</td>
+                  <td className="px-4 py-3 text-sm text-gray-500 text-center">{task.completed ? "Completed" : "Pending"}</td>
                   <td className="px-4 py-3 text-right text-sm font-medium">
                     <div className="flex items-center justify-end gap-2">
                       <button
@@ -132,7 +121,7 @@ function App() {
                       <button
                         className="inline-flex items-center justify-center h-10 px-6 font-medium text-gray-50 bg-red-600 rounded-md shadow transition-colors hover:bg-gray-900/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50"
                         type="button"
-                        onClick={() => handleDeleteTaskClick(task?.id || '')}
+                        onClick={() => handleDeleteTaskClick(task.id)}
                       >
                         Delete
                       </button>
@@ -146,6 +135,6 @@ function App() {
       </section>
     </div>
   );
-}
+};
 
 export default App;
